@@ -1,7 +1,4 @@
-# zfakausdt
-ZFAKA发卡USDT支付插件 实时到账 
-
-#  ZFAKA发卡USDT支付插件 实时到账，实时到账
+#  ZFAKA发卡USDT实时到账支付插件Token188版本 
 ### 网站配置
  - 下载SDK并解压到zfaka代码目录。
  - 进入数据库并执行以下SQL语句
