@@ -10,9 +10,8 @@ configure3, configure4, overtime, active)
 VALUES
 (NULL, 'Token188', 'USDT付款',
 '/res/images/pay/token188.png', 'Token188', 'MD5',
-'', '', '', '',
+'', '', '', '','https://api.token188.com/utg/pay/address', '', '0', '0');
 ```
-'https://api.token188.com/utg/pay/address', '', '0', '0');
 
 ### 进入管理界面，激活Token188 USDT支付
  - 设置中心 > 支付设置 > Token188 > 编辑
