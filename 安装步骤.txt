@@ -1,0 +1,24 @@
+1. 下载SDK并解压到zfaka代码目录
+
+2. 进入数据库并执行以下SQL语句
+
+INSERT INTO t_payment
+(id, payment, payname, payimage, alias, sign_type,
+app_id, app_secret, ali_public_key, rsa_private_key,
+configure3, configure4, overtime, active)
+VALUES
+(NULL, 'Token188', 'USDT付款',
+'/res/images/pay/token188.png', 'Token188', 'MD5',
+'', '', '', '',
+'https://api.token188.com/utg/pay/address', '', '0', '0');
+
+
+
+
+3. 进入管理界面，激活Token188支付
+
+设置中心 > 支付设置 > Token188 > 编辑
+
+app_id	商户ID
+密钥	商户密钥
+是否激活	激活
