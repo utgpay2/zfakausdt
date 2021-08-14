@@ -33,6 +33,7 @@ class Token188
 		        'trade_no'      => $params['orderid'],
                 'total_fee'     => $params['money'],
                 'notify_url'    => $params['weburl'] . '/product/notify/?paymethod='.$this->paymethod,
+				'return_url'=>$params['weburl']. "/query/auto/{$params['orderid']}.html"
             ]);
 			$data = [
 			    'type'           => 1,

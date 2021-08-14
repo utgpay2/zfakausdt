@@ -18,7 +18,8 @@ class Token188SDK {
             'coinName' => 'USDT-TRC20',
             'notifyUrl' => $order['notify_url'],
             'timestamp' => $this->msectime(),
-            'nonceStr' => $this->getNonceStr(16)
+            'nonceStr' => $this->getNonceStr(16),
+			'callBackUrl'=>$order['return_url']
         ];
         //echo $params['totalAmount'];
         $mysign = self::GetSign($this->config['token188_key'], $params);
