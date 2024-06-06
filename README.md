@@ -11,7 +11,7 @@ configure3, configure4, overtime, active)
 VALUES
 (NULL, 'Token188', 'USDT付款',
 '/res/images/pay/token188.png', 'Token188', 'MD5',
-'', '', '', '','https://api.token188.com/utg/pay/address', '', '0', '0');
+'', '', '', '','https://payapi.pay188.net/utg/pay/address', '', '0', '0');
 ```
 
 ### 进入管理界面，激活Token188 USDT支付
@@ -20,13 +20,13 @@ VALUES
  - 密钥	商户密钥
  - 是否激活	激活
 
- - 密钥, app_id  请到[TOKEN188](https://www.token188.com/) 官网注册获取.
+ - 密钥, app_id  请到[TOKEN188](https://www.pay188.net/) 官网注册获取.
 
 ### 产品介绍
 
- - [TOKEN188 USDT支付平台主页](https://www.token188.com)
- - [TOKEN188钱包](https://www.token188.com)（即将推出）
- - [商户平台](https://www.token188.com/manager)
+ - [TOKEN188 USDT支付平台主页](https://www.pay188.net)
+ - [TOKEN188钱包](https://www.pay188.net)（即将推出）
+ - [商户平台](https://mar.pay188.net/)
 ### 特点
  - 使用您自己的USDT地址收款没有中间商
  - 五分钟完成对接
