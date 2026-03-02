@@ -37,8 +37,9 @@ zfaka/                              ← 你的 ZFAKA 根目录
 │   │   └── epay188.php             ← 支付插件核心文件
 │   └── modules/Goadmin/views/payment/tpl/
 │       └── epay188.html            ← 后台配置模板
-└── public/res/images/pay/
-    └── 188pay.png                  ← 支付图标（可选）
+├── public/res/images/pay/
+│   └── 188pay.png                  ← 支付图标（可选）
+└── install_188pay.php              ← 一键安装脚本（安装后删除）
 ```
 
 **命令行操作（SSH）：**
@@ -49,17 +50,33 @@ cd /你的zfaka目录
 # 克隆插件
 git clone https://github.com/utgpay2/zfakausdt.git /tmp/zfakausdt
 
-# 复制文件
+# 复制插件文件
 cp -r /tmp/zfakausdt/application/* application/
 cp -r /tmp/zfakausdt/public/* public/
+
+# 复制一键安装脚本到 ZFAKA 根目录
+cp /tmp/zfakausdt/install_188pay.php .
 
 # 设置权限
 chmod 755 application/library/Pay/epay188/epay188.php
 ```
 
-### 第 2 步：添加数据库记录
+### 第 2 步：一键安装（浏览器访问）
 
-在 ZFAKA 数据库中执行以下 SQL：
+在浏览器中访问安装脚本，自动完成数据库配置：
+
+```
+http://你的域名/install_188pay.php
+```
+
+脚本会自动读取 ZFAKA 的数据库配置，添加支付渠道记录，并检查插件文件是否已就位。
+
+> **安装完成后请立即删除 `install_188pay.php` 以确保安全！**
+
+<details>
+<summary>💡 手动安装（备选方案）</summary>
+
+如果一键安装脚本无法使用，也可以手动在数据库中执行 SQL：
 
 ```sql
 INSERT INTO `t_payment`
@@ -72,7 +89,9 @@ VALUES
  'https://api2.188pay.top', 'usdt', 600, 0);
 ```
 
-> 也可以直接执行仓库中的 `install.sql` 文件。
+也可以直接执行仓库中的 `install.sql` 文件。
+
+</details>
 
 ### 第 3 步：后台配置
 
@@ -111,7 +130,8 @@ VALUES
 │       └── epay188.html            # 后台支付配置表单模板
 ├── public/res/images/pay/
 │   └── 188pay.png                  # 支付按钮图标
-├── install.sql                     # 数据库初始化 SQL
+├── install_188pay.php              # 一键安装脚本（浏览器访问自动配置数据库）
+├── install.sql                     # 数据库初始化 SQL（手动安装备选）
 └── README.md                       # 本文档
 ```
 
