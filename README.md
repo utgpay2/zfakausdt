@@ -169,4 +169,4 @@ $sign = md5($str . $secretKey);
 - [ZFAKA 发卡系统](https://github.com/ZFAKA/ZFAKA)
 - Telegram：[@token188](https://t.me/token188)
 - 频道：[@token188pay](https://t.me/token188pay)
-- 公开群：[@coinpaybest](https://t.me/coinpaybest)
+- 公开群：[加入公开群](https://t.me/+dyDaHNvyQcY2MDBh)
