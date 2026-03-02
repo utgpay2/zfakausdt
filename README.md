@@ -3,7 +3,7 @@
 > 让 ZFAKA 发卡系统支持 USDT (TRC20) / TRX 加密货币收款，资金直达您自己的钱包，无中间商。
 
 [![188Pay](https://img.shields.io/badge/platform-188pay.top-brightgreen.svg)](https://www.188pay.top)
-[![Telegram](https://img.shields.io/badge/telegram-token188-blue.svg?logo=telegram)](https://t.me/token188)
+[![Telegram](https://img.shields.io/badge/telegram-token188-blue.svg?logo=telegram)](https://t.me/token188pay)
 
 ---
 
