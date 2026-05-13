@@ -1,6 +1,6 @@
-# ZFAKA 发卡平台 - 188Pay USDT/TRX 支付插件
+# ZFAKA 发卡平台 - 188Pay 支付插件
 
-> 让 ZFAKA 发卡系统支持 USDT (TRC20) / TRX 加密货币收款，资金直达您自己的钱包，无中间商。
+> 让 ZFAKA 发卡系统支持 USDT (TRC20) / TRX 加密货币，以及支付宝、微信等法币通道收款，资金直达您自己的钱包，无中间商。
 
 [![188Pay](https://img.shields.io/badge/platform-188pay.top-brightgreen.svg)](https://www.188pay.top)
 [![Telegram](https://img.shields.io/badge/telegram-token188-blue.svg?logo=telegram)](https://t.me/token188pay)
@@ -12,7 +12,8 @@
 - **EPay 协议对接** — 标准易支付协议，稳定可靠
 - **跳转收银台** — 用户点击支付后跳转到 188Pay 收银台完成付款
 - **自动回调** — 支付成功后自动通知 ZFAKA 完成发卡
-- **后台可配置** — 商户ID、密钥、网关地址、币种均可在 ZFAKA 后台直接配置
+- **后台可配置** — 商户ID、密钥、网关地址、支付类型均可在 ZFAKA 后台直接配置
+- **多通道支持** — 加密货币（USDT TRC20 / TRX）+ 法币（支付宝 / 微信等）
 - **零手续费** — 收款直达您自己的钱包地址
 
 ---
@@ -20,7 +21,7 @@
 ## 前置条件
 
 1. 已安装 [ZFAKA](https://github.com/ZFAKA/ZFAKA) 发卡系统（v1.4.x）
-2. 已注册 [188Pay 商户账号](https://www.188pay.top/login) 并添加了收款钱包
+2. 已注册 [188Pay 商户账号](https://www.188pay.top/login) 并完成相应通道配置
 
 ---
 
@@ -84,7 +85,7 @@ INSERT INTO `t_payment`
  `app_id`, `app_secret`, `ali_public_key`, `rsa_private_key`,
  `configure3`, `configure4`, `overtime`, `active`)
 VALUES
-('188Pay USDT', 'USDT(TRC20)', '/res/images/pay/188pay.png', 'epay188', 'MD5',
+('188Pay', '188Pay', '/res/images/pay/188pay.png', 'epay188', 'MD5',
  '', '', '', '',
  'https://api2.188pay.top', 'usdt', 600, 0);
 ```
@@ -97,7 +98,7 @@ VALUES
 
 1. 登录 ZFAKA 管理后台
 2. 进入 **支付设置**
-3. 找到 **188Pay USDT**，点击 **编辑**
+3. 找到 **188Pay**，点击 **编辑**
 4. 填写配置：
 
 | 配置项 | 说明 |
@@ -105,16 +106,27 @@ VALUES
 | **商户ID** | 在 [188Pay 商户平台](https://www.188pay.top) → API 密钥页面获取 |
 | **商户密钥** | 同上，获取 Secret Key |
 | **网关地址** | 默认 `https://api2.188pay.top`，一般无需修改 |
-| **币种** | 选择 `USDT (TRC20)` 或 `TRX` |
+| **支付类型** | 见下表 |
 | **超时(秒)** | 建议 `600`（10 分钟） |
 | **是否激活** | 设为 **激活** |
+
+**支付类型填写说明：**
+
+| 填写值 | 说明 |
+|--------|------|
+| `usdt` | USDT (TRC20) 加密货币 |
+| `trx` | TRX 加密货币 |
+| `alipay` | 支付宝（法币） |
+| `wechat` | 微信支付（法币） |
+
+> 如需同时支持多种通道，在数据库中插入多条记录，`alias` 取不同名称即可（如 `epay188_alipay`）。
 
 5. 点击 **确认修改**
 
 ### 第 4 步：测试支付
 
 1. 在 ZFAKA 前台创建一个测试商品（价格设为 0.10）
-2. 下单后选择 USDT 支付
+2. 下单后选择对应支付方式
 3. 页面应跳转到 188Pay 收银台
 4. 完成支付后 ZFAKA 自动发卡
 
@@ -143,8 +155,8 @@ VALUES
 
 ```
 用户下单 → ZFAKA 生成签名 → 302 跳转 188Pay 收银台
-    → 用户在收银台完成 USDT/TRX 转账
-    → 188Pay 检测到链上交易
+    → 用户在收银台完成付款（USDT/TRX 或 支付宝/微信）
+    → 188Pay 确认到账
     → GET 回调 ZFAKA notify_url（附带签名）
     → ZFAKA 验签成功 → 自动发卡
 ```
@@ -176,9 +188,16 @@ $sign = md5($str . $secretKey);
 2. 确认回调地址 `http://你的域名/product/notify/?paymethod=epay188` 能外网访问
 3. 查看 ZFAKA 日志：`log/yewu/` 目录下的日志文件
 
-### Q: 如何同时支持 USDT 和 TRX？
+### Q: 如何同时支持多种支付方式？
 
-在数据库中再插入一条记录，`alias` 改为不同的名称即可。或者直接在后台切换币种配置。
+在数据库中插入多条记录，每条记录的 `alias` 取不同名称，`configure4` 填对应的支付类型即可。例如：
+
+```sql
+-- 支付宝
+INSERT INTO `t_payment` (..., `alias`, `configure4`, ...) VALUES (..., 'epay188_alipay', 'alipay', ...);
+-- USDT
+INSERT INTO `t_payment` (..., `alias`, `configure4`, ...) VALUES (..., 'epay188_usdt', 'usdt', ...);
+```
 
 ---
 
