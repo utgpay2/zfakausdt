@@ -10,7 +10,7 @@
             <div class="layui-tab-content" style="padding: 20px 0;">
                 <div class="layui-form-pane layui-tab-item layui-show">
                     <blockquote class="layui-elem-quote">
-                        <p><b>188Pay USDT/TRX 支付配置</b></p>
+                        <p><b>188Pay USDT/TRX/法币 支付配置</b></p>
                         <p>异步回调地址: <?php echo $config['weburl'];?>/product/notify/?paymethod=<?php echo $item['alias'];?></p>
                         <p>同步跳转地址: <?php echo $config['weburl'];?>/query/auto/{订单号}.html</p>
                     </blockquote>
@@ -50,14 +50,11 @@
                             <div class="layui-form-mid layui-word-aux">如 https://api2.188pay.top</div>
                         </div>
                         <div class="layui-form-item">
-                            <label for="configure4" class="layui-form-label">币种</label>
+                            <label for="configure4" class="layui-form-label">支付类型</label>
                             <div class="layui-input-inline">
-                                <select id="configure4" name="configure4">
-                                    <option value="usdt" <?php if($item['configure4']=='usdt'):?>selected<?php endif;?>>USDT (TRC20)</option>
-                                    <option value="trx" <?php if($item['configure4']=='trx'):?>selected<?php endif;?>>TRX</option>
-                                </select>
+                                <input type="text" id="configure4" name="configure4" required lay-verify="required" autocomplete="off" value="<?php echo $item['configure4'];?>" class="layui-input">
                             </div>
-                            <div class="layui-form-mid layui-word-aux">收款币种</div>
+                            <div class="layui-form-mid layui-word-aux">加密货币填 usdt 或 trx；法币填 alipay</div>
                         </div>
                         <div class="layui-form-item">
                             <label class="layui-form-label">是否激活</label>
