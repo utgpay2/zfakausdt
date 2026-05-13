@@ -66,7 +66,7 @@ if ($exists) {
              `app_id`, `app_secret`, `ali_public_key`, `rsa_private_key`,
              `configure3`, `configure4`, `overtime`, `active`)
             VALUES
-            ('188Pay USDT', 'USDT(TRC20)', '/res/images/pay/188pay.png', 'epay188', 'MD5',
+            ('188Pay', '188Pay', '/res/images/pay/188pay.png', 'epay188', 'MD5',
              '', '', '', '',
              'https://api2.188pay.top', 'usdt', 600, 0)";
         $pdo->exec($sql);
@@ -108,7 +108,7 @@ if (file_exists($iconFile)) {
 
 $messages[] = '';
 if ($status !== 'error') {
-    $messages[] = '下一步：登录 ZFAKA 管理后台 → 设置中心 → 支付设置 → 找到 188Pay USDT → 编辑 → 填入商户ID、密钥、网关地址 → 激活。';
+    $messages[] = '下一步：登录 ZFAKA 管理后台 → 设置中心 → 支付设置 → 找到 188Pay → 编辑 → 填入商户ID、密钥、网关地址，支付类型填 usdt/trx（加密）或 alipay（法币）→ 激活。';
     $messages[] = '安装完成后请删除此文件 (install_188pay.php) 以确保安全。';
 }
 
@@ -150,7 +150,7 @@ function renderPage($status, $message) {
 <div class="card">
   <div class="card-header">
     <h1>188Pay ZFAKA 插件安装</h1>
-    <p>USDT (TRC20) / TRX 加密货币支付</p>
+    <p>USDT / TRX 加密货币 · 支付宝法币</p>
   </div>
   <div class="card-body">
     <div class="status-box">
