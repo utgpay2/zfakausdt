@@ -2,7 +2,7 @@
 /**
  * File: epay188.php
  * Functionality: 188Pay USDT/TRX - EPay协议
- * Date: 2026-03-02
+ * Date: 2026-5.12
  */
 namespace Pay\epay188;
 use \Pay\notify;
