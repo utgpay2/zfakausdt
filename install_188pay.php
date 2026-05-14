@@ -26,6 +26,17 @@ if (!$section) {
     die(renderPage('error', '无法解析数据库配置，请检查 conf/application.ini 文件。'));
 }
 
+// 检测 ADMIN_DIR (ZFAKA 安装时由用户自定义, 不一定是 Goadmin)
+$baseDir = file_exists(__DIR__ . '/application/init.php') ? __DIR__ : '/var/www/zfaka';
+$initFile = $baseDir . '/application/init.php';
+$adminDir = 'Goadmin';
+if (file_exists($initFile)) {
+    $initContent = file_get_contents($initFile);
+    if (preg_match("/define\s*\(\s*['\"]ADMIN_DIR['\"]\s*,\s*['\"]([^'\"]+)['\"]\s*\)/", $initContent, $m)) {
+        $adminDir = $m[1];
+    }
+}
+
 $host = isset($section['WRITE_HOST']) ? $section['WRITE_HOST'] : (isset($section['READ_HOST']) ? $section['READ_HOST'] : 'localhost');
 $port = isset($section['WRITE_PORT']) ? $section['WRITE_PORT'] : (isset($section['READ_PORT']) ? $section['READ_PORT'] : 3306);
 $user = isset($section['WRITE_USER']) ? $section['WRITE_USER'] : (isset($section['READ_USER']) ? $section['READ_USER'] : '');
@@ -85,16 +96,30 @@ if ($pluginExists) {
     $messages[] = '未检测到插件文件，请确认已上传 application/library/Pay/epay188/epay188.php';
 }
 
-// 检查模板文件
-$tplFile = __DIR__ . '/application/modules/Goadmin/views/payment/tpl/epay188.html';
-if (!file_exists($tplFile)) {
-    $tplFile = '/var/www/zfaka/application/modules/Goadmin/views/payment/tpl/epay188.html';
+// 检查/部署后台模板文件
+// ZFAKA 的 Payment 控制器按 ADMIN_DIR 找模板: application/modules/{ADMIN_DIR}/views/payment/tpl/{alias}.html
+// 但仓库里默认打包到了 Goadmin 目录, 如果 ADMIN_DIR 不是 Goadmin 就要自动复制过去
+$tplSrc = $baseDir . '/application/modules/Goadmin/views/payment/tpl/epay188.html';
+$tplDst = $baseDir . '/application/modules/' . $adminDir . '/views/payment/tpl/epay188.html';
+
+if ($adminDir !== 'Goadmin' && file_exists($tplSrc) && !file_exists($tplDst)) {
+    $dstDirPath = dirname($tplDst);
+    if (!is_dir($dstDirPath)) {
+        @mkdir($dstDirPath, 0755, true);
+    }
+    if (@copy($tplSrc, $tplDst)) {
+        $messages[] = "检测到 ADMIN_DIR={$adminDir}，已自动将模板复制到正确目录。";
+    } else {
+        if ($status === 'success') $status = 'warning';
+        $messages[] = "检测到 ADMIN_DIR={$adminDir}，但模板复制失败，请手动执行：cp {$tplSrc} {$tplDst}";
+    }
 }
-if (file_exists($tplFile)) {
-    $messages[] = '后台模板文件已就位 (epay188.html)。';
+
+if (file_exists($tplDst)) {
+    $messages[] = "后台模板文件已就位 (application/modules/{$adminDir}/views/payment/tpl/epay188.html)。";
 } else {
     if ($status === 'success') $status = 'warning';
-    $messages[] = '未检测到后台模板文件，请确认已上传 application/modules/Goadmin/views/payment/tpl/epay188.html';
+    $messages[] = "未检测到后台模板文件，应位于 application/modules/{$adminDir}/views/payment/tpl/epay188.html";
 }
 
 // 检查图标
