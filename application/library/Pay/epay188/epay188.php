@@ -16,7 +16,7 @@ class epay188
      * payconfig字段映射:
      *   app_id     = 188pay商户ID (pid)
      *   app_secret = 188pay商户密钥
-     *   configure3 = 188pay网关地址 (如 https://utg-payment.searchlogstop.workers.dev)
+     *   configure3 = 188pay网关地址 (如 https.xxx.com)
      *   configure4 = 币种 usdt/trx (默认usdt)
      */
     public function pay($payconfig, $params)
