@@ -51,75 +51,92 @@ try {
     die(renderPage('error', '数据库连接失败: ' . $e->getMessage()));
 }
 
-// 检查插件文件是否已上传
-$pluginFile = __DIR__ . '/application/library/Pay/epay188/epay188.php';
-if (!file_exists($pluginFile)) {
-    // 尝试 Docker 映射路径
-    $pluginFile = '/var/www/zfaka/application/library/Pay/epay188/epay188.php';
-}
-$pluginExists = file_exists($pluginFile);
-
-// 检查是否已存在记录
-$stmt = $pdo->prepare("SELECT COUNT(*) FROM t_payment WHERE alias = 'epay188'");
-$stmt->execute();
-$exists = $stmt->fetchColumn() > 0;
+// 检查插件文件是否已上传（USDT/TRX + 支付宝法币 两条插件路径）
+$pluginUsdt = $baseDir . '/application/library/Pay/epay188/epay188.php';
+$pluginAlipay = $baseDir . '/application/library/Pay/epay188alipay/epay188alipay.php';
+$pluginUsdtExists = file_exists($pluginUsdt);
+$pluginAlipayExists = file_exists($pluginAlipay);
 
 $messages = [];
 $status = 'success';
 
-if ($exists) {
-    $messages[] = '支付渠道记录已存在，无需重复添加。';
-} else {
-    // 插入记录
+// 通道定义：alias / payname / configure4 / payimage
+// 注意: alias 不能含下划线, Yaf 自动加载器会把 _ 当成目录分隔符 (PSR-0 规范)
+$channels = [
+    'epay188'      => ['payname' => '188Pay USDT/TRX', 'configure4' => 'usdt',   'payimage' => '/res/images/pay/188pay.png'],
+    'epay188alipay'=> ['payname' => '188Pay 支付宝',   'configure4' => 'alipay', 'payimage' => '/res/images/pay/188pay.png'],
+];
+
+foreach ($channels as $alias => $cfg) {
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM t_payment WHERE alias = ?");
+    $stmt->execute([$alias]);
+    if ($stmt->fetchColumn() > 0) {
+        $messages[] = "支付渠道 {$alias} 记录已存在，跳过。";
+        continue;
+    }
     try {
         $sql = "INSERT INTO `t_payment`
             (`payment`, `payname`, `payimage`, `alias`, `sign_type`,
              `app_id`, `app_secret`, `ali_public_key`, `rsa_private_key`,
              `configure3`, `configure4`, `overtime`, `active`)
             VALUES
-            ('188Pay', '188Pay', '/res/images/pay/188pay.png', 'epay188', 'MD5',
+            ('188Pay', ?, ?, ?, 'MD5',
              '', '', '', '',
-             'https://api2.188pay.top', 'usdt', 600, 0)";
-        $pdo->exec($sql);
-        $messages[] = '支付渠道记录添加成功！';
+             'https://api2.188pay.top', ?, 600, 0)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$cfg['payname'], $cfg['payimage'], $alias, $cfg['configure4']]);
+        $messages[] = "支付渠道 {$alias} 记录添加成功（{$cfg['payname']}）！";
     } catch (PDOException $e) {
         $status = 'error';
-        $messages[] = '数据库插入失败: ' . $e->getMessage();
+        $messages[] = "数据库插入 {$alias} 失败: " . $e->getMessage();
     }
 }
 
 // 检查插件文件
-if ($pluginExists) {
-    $messages[] = '插件文件已就位 (epay188.php)。';
+if ($pluginUsdtExists) {
+    $messages[] = '插件文件已就位：epay188 (USDT/TRX 通道)。';
 } else {
     $status = 'warning';
-    $messages[] = '未检测到插件文件，请确认已上传 application/library/Pay/epay188/epay188.php';
+    $messages[] = '未检测到 USDT/TRX 插件文件 application/library/Pay/epay188/epay188.php';
+}
+if ($pluginAlipayExists) {
+    $messages[] = '插件文件已就位：epay188alipay (支付宝法币通道)。';
+} else {
+    if ($status === 'success') $status = 'warning';
+    $messages[] = '未检测到支付宝插件文件 application/library/Pay/epay188alipay/epay188alipay.php';
 }
 
 // 检查/部署后台模板文件
 // ZFAKA 的 Payment 控制器按 ADMIN_DIR 找模板: application/modules/{ADMIN_DIR}/views/payment/tpl/{alias}.html
-// 但仓库里默认打包到了 Goadmin 目录, 如果 ADMIN_DIR 不是 Goadmin 就要自动复制过去
-$tplSrc = $baseDir . '/application/modules/Goadmin/views/payment/tpl/epay188.html';
-$tplDst = $baseDir . '/application/modules/' . $adminDir . '/views/payment/tpl/epay188.html';
+// 仓库默认打包到 Goadmin 目录, 如果 ADMIN_DIR 不是 Goadmin 就自动复制过去 (USDT + 支付宝两个模板)
+$tplDstDir = $baseDir . '/application/modules/' . $adminDir . '/views/payment/tpl';
+$tplNames = ['epay188.html', 'epay188alipay.html'];
 
-if ($adminDir !== 'Goadmin' && file_exists($tplSrc) && !file_exists($tplDst)) {
-    $dstDirPath = dirname($tplDst);
-    if (!is_dir($dstDirPath)) {
-        @mkdir($dstDirPath, 0755, true);
+if ($adminDir !== 'Goadmin') {
+    if (!is_dir($tplDstDir)) {
+        @mkdir($tplDstDir, 0755, true);
     }
-    if (@copy($tplSrc, $tplDst)) {
-        $messages[] = "检测到 ADMIN_DIR={$adminDir}，已自动将模板复制到正确目录。";
-    } else {
-        if ($status === 'success') $status = 'warning';
-        $messages[] = "检测到 ADMIN_DIR={$adminDir}，但模板复制失败，请手动执行：cp {$tplSrc} {$tplDst}";
+    foreach ($tplNames as $tplName) {
+        $src = $baseDir . '/application/modules/Goadmin/views/payment/tpl/' . $tplName;
+        $dst = $tplDstDir . '/' . $tplName;
+        if (file_exists($src) && !file_exists($dst)) {
+            if (@copy($src, $dst)) {
+                $messages[] = "检测到 ADMIN_DIR={$adminDir}，已自动复制模板 {$tplName}。";
+            } else {
+                if ($status === 'success') $status = 'warning';
+                $messages[] = "复制 {$tplName} 失败，请手动执行：cp {$src} {$dst}";
+            }
+        }
     }
 }
 
-if (file_exists($tplDst)) {
-    $messages[] = "后台模板文件已就位 (application/modules/{$adminDir}/views/payment/tpl/epay188.html)。";
-} else {
-    if ($status === 'success') $status = 'warning';
-    $messages[] = "未检测到后台模板文件，应位于 application/modules/{$adminDir}/views/payment/tpl/epay188.html";
+foreach ($tplNames as $tplName) {
+    if (file_exists($tplDstDir . '/' . $tplName)) {
+        $messages[] = "后台模板已就位：{$adminDir}/views/payment/tpl/{$tplName}";
+    } else {
+        if ($status === 'success') $status = 'warning';
+        $messages[] = "未检测到后台模板 application/modules/{$adminDir}/views/payment/tpl/{$tplName}";
+    }
 }
 
 // 检查图标
@@ -133,7 +150,10 @@ if (file_exists($iconFile)) {
 
 $messages[] = '';
 if ($status !== 'error') {
-    $messages[] = '下一步：登录 ZFAKA 管理后台 → 设置中心 → 支付设置 → 找到 188Pay → 编辑 → 填入商户ID、密钥、网关地址，支付类型填 usdt/trx（加密）或 alipay（法币）→ 激活。';
+    $messages[] = '下一步：登录 ZFAKA 管理后台 → 设置中心 → 支付设置，会看到两条 188Pay 渠道：';
+    $messages[] = '  • epay188 (USDT/TRX 加密货币)';
+    $messages[] = '  • epay188alipay (支付宝法币)';
+    $messages[] = '只用其中一种就只激活一条，两种都用就两条都激活。每条都需要填入：商户ID、密钥、网关地址 (https://api2.188pay.top)、支付类型 (usdt/trx 或 alipay)。';
     $messages[] = '安装完成后请删除此文件 (install_188pay.php) 以确保安全。';
 }
 

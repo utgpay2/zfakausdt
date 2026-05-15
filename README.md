@@ -34,14 +34,23 @@
 ```
 zfaka/                              ← 你的 ZFAKA 根目录
 ├── application/
-│   ├── library/Pay/epay188/
-│   │   └── epay188.php             ← 支付插件核心文件
+│   ├── library/Pay/
+│   │   ├── epay188/
+│   │   │   └── epay188.php          ← USDT/TRX 通道核心文件
+│   │   └── epay188alipay/
+│   │       └── epay188alipay.php    ← 支付宝法币通道核心文件
 │   └── modules/Goadmin/views/payment/tpl/
-│       └── epay188.html            ← 后台配置模板
+│       ├── epay188.html             ← USDT 后台配置模板
+│       └── epay188alipay.html       ← 支付宝后台配置模板
 ├── public/res/images/pay/
 │   └── 188pay.png                  ← 支付图标（可选）
 └── install_188pay.php              ← 一键安装脚本（安装后删除）
 ```
+
+> **⚠️ 命名约束：** 插件目录、PHP 类名、数据库 alias **不能包含下划线**。
+> Yaf 框架的自动加载器遵循 PSR-0 规范，会把类名里的 `_` 当成目录分隔符。
+> 比如 alias 写成 `epay188_alipay`，Yaf 会去找 `Pay/epay188/alipay/epay188/alipay.php` → 找不到 → 500。
+> 所以支付宝通道用 `epay188alipay`（无下划线），USDT 通道用 `epay188`。
 
 **命令行操作（SSH）：**
 
@@ -96,21 +105,25 @@ VALUES
 
 ### 第 3 步：后台配置
 
-1. 登录 ZFAKA 管理后台
-2. 进入 **支付设置**
-3. 找到 **188Pay**，点击 **编辑**
-4. 填写配置：
+安装脚本会自动插入**两条**支付渠道记录，分别用于 USDT 和支付宝。
+
+1. 登录 ZFAKA 管理后台 → **支付设置**
+2. 看到两条 188Pay 渠道：
+   - **epay188**（USDT/TRX 加密货币）
+   - **epay188alipay**（支付宝法币）
+3. 只想用其中一种就只激活那一条；两种都用就两条都激活
+4. 每条都需要填入相同的：
 
 | 配置项 | 说明 |
 |--------|------|
 | **商户ID** | 在 [188Pay 商户平台](https://www.188pay.top) → API 密钥页面获取 |
 | **商户密钥** | 同上，获取 Secret Key |
 | **网关地址** | 默认 `https://api2.188pay.top`，一般无需修改 |
-| **支付类型** | 见下表 |
+| **支付类型** | USDT 通道填 `usdt` / `trx`；支付宝通道填 `alipay` |
 | **超时(秒)** | 建议 `600`（10 分钟） |
 | **是否激活** | 设为 **激活** |
 
-**支付类型填写说明：**
+**支付类型可选值：**
 
 | 填写值 | 说明 |
 |--------|------|
@@ -120,8 +133,6 @@ VALUES
 | `wechat` | 微信支付（法币） |
 
 > **大小写不敏感**，填 `alipay` 或 `Alipay` 效果相同。
->
-> 如需同时支持多种通道，在数据库中插入多条记录，`alias` 取不同名称即可（如 `epay188_alipay`）。
 
 5. 点击 **确认修改**
 
@@ -138,10 +149,14 @@ VALUES
 
 ```
 ├── application/
-│   ├── library/Pay/epay188/
-│   │   └── epay188.php             # 支付插件（创建订单 + 回调验签）
+│   ├── library/Pay/
+│   │   ├── epay188/
+│   │   │   └── epay188.php          # USDT/TRX 通道（创建订单 + 回调验签）
+│   │   └── epay188alipay/
+│   │       └── epay188alipay.php    # 支付宝法币通道（创建订单 + 回调验签）
 │   └── modules/Goadmin/views/payment/tpl/
-│       └── epay188.html            # 后台支付配置表单模板
+│       ├── epay188.html             # USDT 后台支付配置表单模板
+│       └── epay188alipay.html       # 支付宝后台支付配置表单模板
 ├── public/res/images/pay/
 │   └── 188pay.png                  # 支付按钮图标
 ├── install_188pay.php              # 一键安装脚本（浏览器访问自动配置数据库）
@@ -192,13 +207,34 @@ $sign = md5($str . $secretKey);
 
 ### Q: 如何同时支持多种支付方式？
 
-在数据库中插入多条记录，每条记录的 `alias` 取不同名称，`configure4` 填对应的支付类型即可。例如：
+仓库已经提供两个插件副本（`epay188` + `epay188alipay`），安装脚本默认会插入两条记录。后台把两条都激活就行。
 
-```sql
--- 支付宝
-INSERT INTO `t_payment` (..., `alias`, `configure4`, ...) VALUES (..., 'epay188_alipay', 'alipay', ...);
--- USDT
-INSERT INTO `t_payment` (..., `alias`, `configure4`, ...) VALUES (..., 'epay188_usdt', 'usdt', ...);
+如果还要加更多通道（比如微信），复制 `epay188alipay` 目录改名（不要含下划线），同时插入一条 `t_payment` 记录，`alias` 写新名字。
+
+### Q: 后台编辑页 500 / 前台点支付按钮 500？
+
+最常见原因：alias 含下划线。Yaf 自动加载器会把类名里的 `_` 当成目录分隔符（PSR-0 遗留规范），导致找不到插件 PHP 文件。所以 alias 必须用 `epay188alipay` 而不是 `epay188_alipay`。
+
+检查 ZFAKA 的 PHP 错误日志：`log/php/{当天日期}.log`，会看到类似：
+
+```
+Yaf\Loader::autoload(): Failed opening script
+  application/library/Pay/epay188/alipay/epay188/alipay.php
+```
+
+如果看到这种「斜杠拆开」的路径，就是 alias 含下划线导致的。
+
+### Q: 后台编辑页看不到「网关地址」「支付类型」字段？
+
+`install_188pay.php` 会自动读取 ZFAKA 的 `application/init.php` 检测 `ADMIN_DIR`，并把模板复制到正确目录。如果没生效，手动复制：
+
+```bash
+# 假设 ADMIN_DIR=Befree
+mkdir -p application/modules/Befree/views/payment/tpl/
+cp application/modules/Goadmin/views/payment/tpl/epay188*.html \
+   application/modules/Befree/views/payment/tpl/
+# 清模板缓存
+rm -f temp/payment.json
 ```
 
 ---
